@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Televoto de verdad</title>
+  <style>
+    :root{
+      --bg:#000;
+      --panel:#0b0d12;
+      --panel2:#10131a;
+      --line:#232833;
+      --text:#eef2ff;
+      --muted:#8f97a9;
+      --accent:#8b93ff;
+      --accent2:#67d9c2;
+      --gold:#f0c85a;
+      --danger:#ff6f86;
+      --r:18px;
+      --shadow:0 14px 36px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:inherit}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
+    .brand{display:flex;gap:12px;align-items:center;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+    .logo{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:#12151d;border:1px solid var(--line);font-size:22px}
+    h1{margin:0;font-size:clamp(24px,4vw,34px);line-height:1.05}
+    .sub{margin-top:4px;color:var(--muted);font-size:13px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .chip{padding:9px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);color:var(--muted);font-size:13px}
+    .chip strong{color:var(--text)}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+    .head{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.04);display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+    .body{padding:16px}
+    .tabs,.segrow{display:flex;gap:8px;flex-wrap:wrap}
+    .tab,.btn,.seg{border:1px solid var(--line);background:#111520;color:var(--text);border-radius:12px;padding:10px 13px;font-weight:700;cursor:pointer;transition:transform .16s ease,background .16s ease,border-color .16s ease,opacity .16s ease}
+    .tab:hover,.btn:hover,.seg:hover{transform:translateY(-1px);background:#151a28}
+    .tab.active,.seg.active{border-color:rgba(139,147,255,.75);background:#151b2b}
+    .btn:disabled,.seg:disabled,.tab:disabled{opacity:.45;cursor:not-allowed;transform:none}
+    .fade{animation:fade .18s ease both}
+    @keyframes fade{from{opacity:.3;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .status{margin-bottom:12px;color:var(--muted);font-size:13px;min-height:18px}
+    .voteBar{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:#0c0f16;margin-bottom:12px}
+    .voteBar .label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+    .voteBar .n{font-size:34px;font-weight:900;letter-spacing:-.04em}
+    .songFocus{padding:14px 16px;border:1px solid var(--line);border-radius:16px;background:#0c0f16;margin-bottom:12px;display:grid;gap:10px}
+    .songFocusTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+    .songFocusName{font-weight:900;font-size:18px;display:flex;gap:8px;align-items:flex-start;line-height:1.15}
+    .songFocusMeta{color:var(--muted);font-size:13px;margin-top:4px}
+    .videoShell{width:100%;aspect-ratio:16/9;border-radius:14px;background:#050608;overflow:hidden;display:grid;place-items:center;border:1px solid rgba(255,255,255,.05)}
+    .videoShell iframe{width:100%;height:100%;border:0}
+    .videoEmpty{padding:16px;text-align:center;color:var(--muted);font-size:14px;line-height:1.45}
+    .songlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    @media (max-width: 760px){.songlist{grid-template-columns:1fr}}
+    .song{padding:12px;border:1px solid rgba(255,255,255,.05);border-radius:16px;background:#0d111a;display:grid;gap:10px;transition:transform .16s ease,border-color .16s ease,background .16s ease}
+    .song:hover{transform:translateY(-1px);border-color:#313a4c;background:#101625}
+    .song.sel{border-color:rgba(139,147,255,.8);box-shadow:0 0 0 1px rgba(139,147,255,.16) inset}
+    .songTop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+    .songTitle{font-size:15px;font-weight:900;line-height:1.2;display:flex;gap:8px;align-items:flex-start}
+    .songYear{color:var(--muted);font-size:12px;margin-top:3px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .voteCount{min-width:24px;text-align:center;font-weight:900;color:var(--gold)}
+    .link{color:var(--accent2);text-decoration:none;font-size:13px}
+    .link:hover{text-decoration:underline}
+    .tiny{color:var(--muted);font-size:12px}
+    .row{display:grid;grid-template-columns:36px 1fr 64px 64px;gap:10px;align-items:center;padding:10px 11px;border-radius:14px;background:#0d1118;border:1px solid rgba(255,255,255,.05)}
+    .rank{font-weight:900;color:var(--gold);text-align:center}
+    .rName{font-weight:800;display:flex;gap:8px;align-items:flex-start;line-height:1.2}
+    .rSub{color:var(--muted);font-size:12px;margin-top:2px}
+    .num{text-align:right;font-weight:900;font-variant-numeric:tabular-nums}
+    .list{display:grid;gap:8px}
+    .search{background:#0e1219;border:1px solid var(--line);color:var(--text);border-radius:12px;padding:10px 12px;outline:none;min-width:min(100%,280px)}
+    .search:focus{border-color:#3d4760}
+    .hidden{display:none !important}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo">🎤</div>
+        <div>
+          <h1>Televoto de verdad</h1>
+          <div class="sub">20 votos, 10 canciones, cierre diario en CEST, Firebase cuando hay red y escrutinio local cuando no la hay.</div>
+        </div>
+      </div>
+      <div class="chips">
+        <div class="chip">Día: <strong id="todayLabel">…</strong></div>
+        <div class="chip">Cierra en: <strong id="countdown">…</strong></div>
+        <div class="chip">Sync: <strong id="syncLabel">…</strong></div>
+      </div>
+    </div>
+
+    <section class="panel">
+      <div class="head">
+        <div class="tabs" id="mainTabs">
+          <button class="tab active" data-view="vote">Votar hoy</button>
+          <button class="tab" data-view="result">Resultado previo</button>
+          <button class="tab" data-view="global">Ranking global</button>
+        </div>
+        <button class="btn" id="confirmBtn">Confirmar votos</button>
+      </div>
+      <div class="body">
+        <div class="status" id="statusLine"></div>
+
+        <div id="voteView" class="fade">
+          <div class="voteBar">
+            <div>
+              <div class="label">Votos restantes</div>
+              <div class="n" id="remainingVotes">20</div>
+            </div>
+            <div class="tiny" id="selectedHint">Selecciona una canción para ver su vídeo.</div>
+          </div>
+
+          <div class="songFocus">
+            <div class="songFocusTop">
+              <div>
+                <div class="songFocusName" id="selectedTitle"><span>🇪🇺</span><span>...</span></div>
+                <div class="songFocusMeta" id="selectedMeta">Año —</div>
+              </div>
+              <a class="link" id="selectedLink" href="#" target="_blank" rel="noopener noreferrer">Abrir enlace</a>
+            </div>
+            <div class="videoShell" id="videoShell">
+              <div class="videoEmpty" id="videoEmpty">Selecciona una canción para ver el vídeo.</div>
+            </div>
+          </div>
+
+          <div class="songlist" id="songList"></div>
+        </div>
+
+        <div id="resultView" class="hidden fade">
+          <div class="list" id="previousResult"></div>
+        </div>
+
+        <div id="globalView" class="hidden fade">
+          <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+            <div class="tabs" id="yearTabs"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="seg active" id="modeVotes">Votos</button>
+              <button class="seg" id="modePoints">Puntos</button>
+              <input class="search" id="searchBox" type="search" placeholder="Buscar canción o artista" />
+            </div>
+          </div>
+          <div class="list" id="globalRanking"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    const firebaseConfig = { apiKey:"AIzaSyBhmUzfpTmhsFOS3V5IQSuKK9CXS45WeQ", authDomain:"televoto-de-verdad.firebaseapp.com", databaseURL:"https://televoto-de-verdad-default-rtdb.firebaseio.com", projectId:"televoto-de-verdad", storageBucket:"televoto-de-verdad.firebasestorage.app", messagingSenderId:"516087140020", appId:"1:516087140020:web:09ce629da67815c45091e1" };
+
+    const YEAR_START = 2008;
+    const YEAR_END = 2026;
+    const STORE_KEY = 'tvv_clean_v3';
+    const API_BASE = 'https://en.wikipedia.org/w/api.php';
+    const POINTS = [12,10,8,7,6,5,4,3,2,1];
+    const EU_FLAG = '🇪🇺';
+
+    let fb = null;
+    try {
+      const [appMod, dbMod] = await Promise.all([
+        import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js')
+      ]);
+      const app = appMod.initializeApp(firebaseConfig);
+      fb = { db: dbMod.getDatabase(app), ref: dbMod.ref, get: dbMod.get, set: dbMod.set, update: dbMod.update, runTransaction: dbMod.runTransaction, onValue: dbMod.onValue };
+    } catch (e) {
+      fb = null;
+    }
+
+    const $ = (id) => document.getElementById(id);
+    const els = {
+      todayLabel: $('todayLabel'), countdown: $('countdown'), syncLabel: $('syncLabel'), statusLine: $('statusLine'),
+      remainingVotes: $('remainingVotes'), selectedHint: $('selectedHint'), selectedTitle: $('selectedTitle'), selectedMeta: $('selectedMeta'), selectedLink: $('selectedLink'), videoShell: $('videoShell'), videoEmpty: $('videoEmpty'),
+      songList: $('songList'), previousResult: $('previousResult'), globalRanking: $('globalRanking'),
+      voteView: $('voteView'), resultView: $('resultView'), globalView: $('globalView'), mainTabs: $('mainTabs'),
+      confirmBtn: $('confirmBtn'), yearTabs: $('yearTabs'), modeVotes: $('modeVotes'), modePoints: $('modePoints'), searchBox: $('searchBox')
+    };
+
+    const years = ['all', ...Array.from({length: YEAR_END - YEAR_START + 1}, (_, i) => String(YEAR_START + i))];
+    let catalog = [];
+    let state = loadState();
+    let currentDayKey = getTodayKey();
+    let currentDay = null;
+    let online = navigator.onLine;
+
+    function loadState(){
+      try {
+        return JSON.parse(localStorage.getItem(STORE_KEY)) || {
+          days: {}, totals: {}, pendingVotes: [], pendingFinalizations: [], activeYear: 'all', mode: 'votes', selected: '', lastResult: null
+        };
+      } catch {
+        return { days: {}, totals: {}, pendingVotes: [], pendingFinalizations: [], activeYear: 'all', mode: 'votes', selected: '', lastResult: null };
+      }
+    }
+
+    function saveState(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+    function pad(n){ return String(n).padStart(2, '0'); }
+    function getMadridNow(){ return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Madrid' })); }
+    function getTodayKey(){ const d = getMadridNow(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+    function getCountdown(){ const n = getMadridNow(); const x = new Date(n); x.setHours(24,0,0,0); return x - n; }
+    function fmt(ms){ const s = Math.max(0, Math.floor(ms/1000)); return `${pad(Math.floor(s/3600))}:${pad(Math.floor((s%3600)/60))}:${pad(s%60)}`; }
+    function xmur3(str){ let h = 1779033703 ^ str.length; for (let i=0;i<str.length;i++){ h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; } return () => (h = Math.imul(h ^ (h >>> 16), 2246822507), h = Math.imul(h ^ (h >>> 13), 3266489909), (h ^= h >>> 16) >>> 0); }
+    function mulberry32(a){ return function(){ let t = a += 0x6D2B79F5; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+    function shuffle(arr, seed){ const out = [...arr]; const rng = mulberry32(xmur3(seed)()); for (let i = out.length - 1; i > 0; i--){ const j = Math.floor(rng() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; } return out; }
+    function keyOf(s){ return `${s.year}::${s.title}`; }
+    function cleanTitle(t){ return String(t).replace(/\s*\([^)]*\)$/, '').replace(/^"|"$/g, ''); }
+    function flagFor(song){ return song.flag || EU_FLAG; }
+
+    
+    const videoCache = new Map();
+    let videoRequestId = 0;
+    let lastVideoKey = '';
+    const CAN_EMBED_YT = location.protocol !== 'file:';
+
+    function youtubeEmbedFromUrl(rawUrl){
+      try {
+        const u = new URL(rawUrl);
+        const host = u.hostname.replace(/^www\./, '').toLowerCase();
+        let id = '';
+        if (u.searchParams.get('v')) id = u.searchParams.get('v');
+        else if (host === 'youtu.be') id = u.pathname.split('/').filter(Boolean)[0] || '';
+        else if (u.pathname.includes('/shorts/')) id = u.pathname.split('/shorts/')[1]?.split('/')[0] || '';
+        if (!id) return null;
+
+        const params = new URLSearchParams();
+        params.set('rel', '0');
+        params.set('playsinline', '1');
+        const origin = location.origin;
+        if (origin && origin !== 'null') params.set('origin', origin);
+        if (location.href && !location.href.startsWith('file:')) params.set('widget_referrer', location.href);
+
+        return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?${params.toString()}`;
+      } catch {
+        return null;
+      }
+    }
+
+    async function resolveVideoUrl(song){
+      const cacheKey = keyOf(song);
+      if (videoCache.has(cacheKey)) return videoCache.get(cacheKey);
+
+      const api = new URL(API_BASE);
+      api.searchParams.set('action', 'parse');
+      api.searchParams.set('format', 'json');
+      api.searchParams.set('origin', '*');
+      api.searchParams.set('prop', 'externallinks');
+      api.searchParams.set('page', song.url.split('/wiki/')[1] ? decodeURIComponent(song.url.split('/wiki/')[1]) : song.title);
+
+      try {
+        const r = await fetch(api);
+        const j = await r.json();
+        const links = j?.parse?.externallinks || [];
+        const ytLink = links.find(l => /(?:youtube\.com|youtu\.be)/i.test(l));
+        const embedUrl = ytLink ? youtubeEmbedFromUrl(ytLink) : null;
+        if (!embedUrl) {
+          videoCache.set(cacheKey, null);
+          return null;
+        }
+
+        // Probe embeddability; if this fails, we'll show the external link instead.
+        const probe = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(ytLink)}&format=json`);
+        if (!probe.ok) {
+          videoCache.set(cacheKey, null);
+          return null;
+        }
+
+        videoCache.set(cacheKey, embedUrl);
+        return embedUrl;
+      } catch {
+        videoCache.set(cacheKey, null);
+        return null;
+      }
+    }
+
+    function clearVideoBox(message){
+      els.videoShell.innerHTML = `<div class="videoEmpty">${escapeHtml(message)}</div>`;
+    }
+
+    async function loadSelectedVideo(song){
+      const requestId = ++videoRequestId;
+      els.selectedHint.textContent = CAN_EMBED_YT
+        ? 'Buscando vídeo incrustable…'
+        : 'Abriste el archivo como file://. YouTube no suele entregar el referer ahí, así que el embed puede fallar con Error 153. Sírvelo desde http://localhost.';
+      clearVideoBox('Buscando vídeo…');
+
+      if (!CAN_EMBED_YT) {
+        clearVideoBox('Para ver el vídeo incrustado, abre este archivo desde http://localhost o https://. En file:// YouTube suele devolver Error 153.');
+        return;
+      }
+
+      const embedUrl = await resolveVideoUrl(song);
+      if (requestId !== videoRequestId) return;
+
+      if (embedUrl) {
+        els.videoShell.innerHTML = `<iframe class="video" title="Reproductor de YouTube" referrerpolicy="strict-origin-when-cross-origin" src="${embedUrl}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+        els.selectedHint.textContent = 'Vídeo cargado desde enlace embebible.';
+      } else {
+        clearVideoBox('No hay un enlace de YouTube embebible para esta canción. Usa el enlace externo.');
+        els.selectedHint.textContent = 'Sin embed disponible para esta canción.';
+      }
+    }
+function escapeHtml(str){ return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;'); }
+
+    async function loadCatalog(){
+      try {
+        const groups = await Promise.all(Array.from({length: YEAR_END - YEAR_START + 1}, async (_, i) => {
+          const year = YEAR_START + i;
+          const url = new URL(API_BASE);
+          url.searchParams.set('action', 'query');
+          url.searchParams.set('format', 'json');
+          url.searchParams.set('origin', '*');
+          url.searchParams.set('list', 'categorymembers');
+          url.searchParams.set('cmtitle', `Category:Eurovision songs of ${year}`);
+          url.searchParams.set('cmtype', 'page');
+          url.searchParams.set('cmlimit', 'max');
+          let out = [], cont = '';
+          do {
+            const u = new URL(url);
+            if (cont) u.searchParams.set('cmcontinue', cont);
+            const r = await fetch(u);
+            const j = await r.json();
+            out.push(...(j?.query?.categorymembers || []));
+            cont = j?.continue?.cmcontinue || '';
+          } while (cont);
+          return out.map(m => ({ year, title: m.title, url: `https://en.wikipedia.org/wiki/${encodeURIComponent(m.title.replace(/ /g,'_'))}`, flag: EU_FLAG }));
+        }));
+        const seen = new Set();
+        catalog = groups.flat().filter(s => { const k = keyOf(s); if (seen.has(k)) return false; seen.add(k); return true; });
+        if (!catalog.length) throw new Error('empty');
+      } catch {
+        catalog = [
+          {year:2008,title:'Molitva',url:'https://en.wikipedia.org/wiki/Molitva',flag:EU_FLAG},{year:2009,title:'Fairytale',url:'https://en.wikipedia.org/wiki/Fairytale_(Alexander_Rybak_song)',flag:EU_FLAG},{year:2010,title:'Satellite',url:'https://en.wikipedia.org/wiki/Satellite_(Lena_Meyer-Landrut_song)',flag:EU_FLAG},{year:2011,title:'Running Scared',url:'https://en.wikipedia.org/wiki/Running_Scared_(Nigar_Jamal_and_Eldar_Gasimov_song)',flag:EU_FLAG},{year:2012,title:'Euphoria',url:'https://en.wikipedia.org/wiki/Euphoria_(Loreen_song)',flag:EU_FLAG},{year:2013,title:'Only Teardrops',url:'https://en.wikipedia.org/wiki/Only_Teardrops',flag:EU_FLAG},{year:2014,title:'Rise Like a Phoenix',url:'https://en.wikipedia.org/wiki/Rise_Like_a_Phoenix',flag:EU_FLAG},{year:2015,title:'Heroes',url:'https://en.wikipedia.org/wiki/Heroes_(M%C3%A5ns_Zelmerl%C3%B6w_song)',flag:EU_FLAG},{year:2016,title:'1944',url:'https://en.wikipedia.org/wiki/1944_(song)',flag:EU_FLAG},{year:2017,title:'Amar pelos dois',url:'https://en.wikipedia.org/wiki/Amar_pelos_dois',flag:EU_FLAG},{year:2018,title:'Toy',url:'https://en.wikipedia.org/wiki/Toy_(Netta_song)',flag:EU_FLAG},{year:2019,title:'Arcade',url:'https://en.wikipedia.org/wiki/Arcade_(song)',flag:EU_FLAG},{year:2020,title:'Uno',url:'https://en.wikipedia.org/wiki/Uno_(Little_Big_song)',flag:EU_FLAG},{year:2021,title:'Zitti e buoni',url:'https://en.wikipedia.org/wiki/Zitti_e_buoni',flag:EU_FLAG},{year:2022,title:'Stefania',url:'https://en.wikipedia.org/wiki/Stefania_(song)',flag:EU_FLAG},{year:2023,title:'Tattoo',url:'https://en.wikipedia.org/wiki/Tattoo_(Loreen_song)',flag:EU_FLAG},{year:2024,title:'The Code',url:'https://en.wikipedia.org/wiki/The_Code_(song)',flag:EU_FLAG},{year:2025,title:'Wasted Love',url:'https://en.wikipedia.org/wiki/Wasted_Love_(song)',flag:EU_FLAG},{year:2026,title:'Eclipse',url:'https://en.wikipedia.org/wiki/Eclipse_(Delta_Goodrem_song)',flag:EU_FLAG}
+        ];
+      }
+    }
+
+    function daySeed(dayKey){ return `tvv-${dayKey}`; }
+    function chooseSongs(dayKey){ return shuffle([...catalog].sort((a,b)=>a.year-b.year || a.title.localeCompare(b.title,'en')), daySeed(dayKey)).slice(0,10); }
+
+    function ensureDay(dayKey){
+      if (!state.days[dayKey]) {
+        const songs = chooseSongs(dayKey);
+        const votes = Object.fromEntries(songs.map(s => [keyOf(s), 0]));
+        state.days[dayKey] = { songs, votes, confirmed: false, finalized: false, result: [] };
+        saveState();
+      }
+      return state.days[dayKey];
+    }
+
+    function totalVotes(votes){ return Object.values(votes || {}).reduce((a,b)=>a+b,0); }
+
+    async function syncVoteToFirebase(dayKey, songKey, delta){
+      if (!fb || !online) return false;
+      try {
+        await fb.runTransaction(fb.ref(fb.db, `tvv/days/${dayKey}/votes/${songKey}`), cur => (cur || 0) + delta);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function queueVote(dayKey, songKey, delta){ state.pendingVotes.push({ dayKey, songKey, delta }); saveState(); }
+    function queueFinalization(dayKey){ if (!state.pendingFinalizations.some(x => x.dayKey === dayKey)) { state.pendingFinalizations.push({ dayKey }); saveState(); } }
+
+    async function flushQueue(){
+      if (!fb || !online) return;
+      const votes = [...state.pendingVotes];
+      state.pendingVotes = [];
+      for (const op of votes) await syncVoteToFirebase(op.dayKey, op.songKey, op.delta);
+      const finals = [...state.pendingFinalizations];
+      state.pendingFinalizations = [];
+      for (const op of finals) await pushFinalizationToFirebase(op.dayKey);
+      saveState();
+    }
+
+    function computeResult(day){
+      const songs = day.songs.map(s => ({ ...s, key: keyOf(s), votes: Number(day.votes[keyOf(s)] || 0) }))
+        .sort((a,b) => b.votes - a.votes || a.title.localeCompare(b.title,'en'));
+      songs.forEach((s, i) => s.points = POINTS[i] || 0);
+      return songs;
+    }
+
+    function mergeTotalsFromResult(result){
+      for (const s of result) {
+        const k = s.key;
+        const base = state.totals[k] || { year: s.year, title: s.title, url: s.url, flag: s.flag || EU_FLAG, votes: 0, points: 0 };
+        base.year = s.year; base.title = s.title; base.url = s.url; base.flag = s.flag || EU_FLAG;
+        base.votes += s.votes; base.points += s.points;
+        state.totals[k] = base;
+      }
+    }
+
+    async function pushFinalizationToFirebase(dayKey){
+      const day = ensureDay(dayKey);
+      if (day.finalized) return;
+      const result = computeResult(day);
+      if (fb && online) {
+        try {
+          await fb.update(fb.ref(fb.db, `tvv/days/${dayKey}`), { confirmed: true, finalized: true, result });
+          for (const s of result) {
+            const k = s.key;
+            await fb.runTransaction(fb.ref(fb.db, `tvv/totals/${k}`), cur => ({ ...(cur || {}), year: s.year, title: s.title, url: s.url, flag: s.flag || EU_FLAG, votes: (cur?.votes || 0) + s.votes, points: (cur?.points || 0) + s.points }));
+          }
+          await fb.set(fb.ref(fb.db, 'tvv/state/lastResult'), { dayKey, result, at: Date.now() });
+        } catch {}
+      }
+    }
+
+    function finalizeDay(dayKey){
+      const day = ensureDay(dayKey);
+      if (day.finalized) return;
+      const result = computeResult(day);
+      day.confirmed = true;
+      day.finalized = true;
+      day.result = result;
+      mergeTotalsFromResult(result);
+      state.lastResult = { dayKey, result };
+      saveState();
+      if (online) pushFinalizationToFirebase(dayKey); else queueFinalization(dayKey);
+    }
+
+    function setStatus(text){ els.statusLine.textContent = text || ''; }
+
+    function renderVote(){
+      const day = currentDay;
+      const used = totalVotes(day.votes);
+      els.remainingVotes.textContent = String(Math.max(0, 20 - used));
+      els.selectedHint.textContent = day.confirmed ? 'Votos cerrados para hoy.' : `Quedan ${Math.max(0, 20 - used)} votos.`;
+      const selected = day.songs.find(s => keyOf(s) === state.selected) || day.songs[0];
+      if (selected) {
+        const selectedKey = keyOf(selected);
+        if (state.selected !== selectedKey) {
+          state.selected = selectedKey;
+          saveState();
+        }
+        els.selectedTitle.innerHTML = `<span>${flagFor(selected)}</span><span>${escapeHtml(selected.title)}</span>`;
+        els.selectedMeta.textContent = `Año ${selected.year}`;
+        els.selectedLink.href = selected.url;
+        if (selectedKey !== lastVideoKey) {
+          lastVideoKey = selectedKey;
+          loadSelectedVideo(selected);
+        }
+      }
+      els.songList.innerHTML = '';
+      day.songs.forEach(song => {
+        const k = keyOf(song);
+        const count = day.votes[k] || 0;
+        const card = document.createElement('article');
+        card.className = 'song' + (k === state.selected ? ' sel' : '');
+        card.innerHTML = `
+          <div class="songTop">
+            <div>
+              <div class="songTitle"><span>${flagFor(song)}</span><span>${escapeHtml(song.title)}</span></div>
+              <div class="songYear">Año ${song.year}</div>
+            </div>
+            <div class="voteCount">${count}</div>
+          </div>
+          <div class="controls">
+            <button class="btn" data-act="sel">Ver video</button>
+            <button class="btn" data-act="minus" ${day.confirmed ? 'disabled' : ''}>−1</button>
+            <button class="btn" data-act="plus" ${day.confirmed || totalVotes(day.votes) >= 20 ? 'disabled' : ''}>+1</button>
+            <a class="link" href="${song.url}" target="_blank" rel="noopener noreferrer">Enlace</a>
+          </div>`;
+        card.querySelector('[data-act="sel"]').onclick = () => { state.selected = k; saveState(); renderVote(); };
+        card.querySelector('[data-act="plus"]').onclick = async () => {
+          if (day.confirmed || totalVotes(day.votes) >= 20) return;
+          day.votes[k] = (day.votes[k] || 0) + 1;
+          saveState();
+          const ok = await syncVoteToFirebase(currentDayKey, k, 1);
+          if (!ok) queueVote(currentDayKey, k, 1);
+          renderVote();
+        };
+        card.querySelector('[data-act="minus"]').onclick = async () => {
+          if (day.confirmed) return;
+          day.votes[k] = Math.max(0, (day.votes[k] || 0) - 1);
+          if (!day.votes[k]) delete day.votes[k];
+          saveState();
+          const ok = await syncVoteToFirebase(currentDayKey, k, -1);
+          if (!ok) queueVote(currentDayKey, k, -1);
+          renderVote();
+        };
+        els.songList.appendChild(card);
+      });
+    }
+
+    function renderResult(){
+      const day = state.lastResult?.result?.length ? state.lastResult : null;
+      if (!day) { els.previousResult.innerHTML = `<div class="tiny">Todavía no hay un resultado cerrado.</div>`; return; }
+      els.previousResult.innerHTML = `<div class="tiny" style="margin-bottom:8px">Día ${day.dayKey}</div>` + day.result.map((s, i) => `
+        <div class="row">
+          <div class="rank">${i + 1}</div>
+          <div><div class="rName"><span>${flagFor(s)}</span><span>${escapeHtml(s.title)}</span></div><div class="rSub">Año ${s.year} · ${s.votes} voto(s)</div></div>
+          <div class="num">${s.votes}</div>
+          <div class="num">${s.points}</div>
+        </div>`).join('');
+    }
+
+    function renderYearTabs(){
+      els.yearTabs.innerHTML = '';
+      years.forEach(y => {
+        const b = document.createElement('button');
+        b.className = 'tab' + (state.activeYear === y ? ' active' : '');
+        b.textContent = y === 'all' ? 'Todo' : y;
+        b.onclick = () => { state.activeYear = y; saveState(); renderYearTabs(); renderGlobal(); };
+        els.yearTabs.appendChild(b);
+      });
+    }
+
+    function renderGlobal(){
+      renderYearTabs();
+      const q = els.searchBox.value.trim().toLowerCase();
+      const rows = catalog.map(song => {
+        const k = keyOf(song);
+        const t = state.totals[k] || { votes: 0, points: 0 };
+        return { ...song, key: k, votes: Number(t.votes || 0), points: Number(t.points || 0) };
+      }).filter(s => (state.activeYear === 'all' || String(s.year) === state.activeYear) && (!q || `${s.title} ${s.year}`.toLowerCase().includes(q)))
+        .sort((a,b) => state.mode === 'votes' ? (b.votes - a.votes || b.points - a.points || a.title.localeCompare(b.title,'en')) : (b.points - a.points || b.votes - a.votes || a.title.localeCompare(b.title,'en')));
+      els.globalRanking.innerHTML = rows.map((s, i) => `
+        <div class="row">
+          <div class="rank">${i + 1}</div>
+          <div><div class="rName"><span>${flagFor(s)}</span><span>${escapeHtml(s.title)}</span></div><div class="rSub">Año ${s.year}</div></div>
+          <div class="num">${s.votes}</div>
+          <div class="num">${s.points}</div>
+        </div>`).join('');
+    }
+
+    function switchView(view){
+      els.voteView.classList.toggle('hidden', view !== 'vote');
+      els.resultView.classList.toggle('hidden', view !== 'result');
+      els.globalView.classList.toggle('hidden', view !== 'global');
+      [...document.querySelectorAll('[data-view]')].forEach(b => b.classList.toggle('active', b.dataset.view === view));
+      if (view === 'global') renderGlobal();
+      if (view === 'result') renderResult();
+    }
+
+    function bindUI(){
+      els.mainTabs.addEventListener('click', e => {
+        const b = e.target.closest('[data-view]'); if (!b) return; switchView(b.dataset.view);
+      });
+      els.confirmBtn.onclick = async () => {
+        const day = ensureDay(currentDayKey);
+        day.confirmed = true;
+        saveState();
+        if (fb && online) {
+          try { await fb.update(fb.ref(fb.db, `tvv/days/${currentDayKey}`), { confirmed: true }); } catch {}
+        }
+        setStatus('Votos confirmados.');
+      };
+      els.modeVotes.onclick = () => { state.mode = 'votes'; saveState(); els.modeVotes.classList.add('active'); els.modePoints.classList.remove('active'); renderGlobal(); };
+      els.modePoints.onclick = () => { state.mode = 'points'; saveState(); els.modePoints.classList.add('active'); els.modeVotes.classList.remove('active'); renderGlobal(); };
+      els.searchBox.oninput = renderGlobal;
+      window.addEventListener('online', async () => { online = true; updateNet(); await flushQueue(); await hydrateFirebase(); });
+      window.addEventListener('offline', () => { online = false; updateNet(); });
+    }
+
+    function updateNet(){ els.syncLabel.textContent = fb ? (online ? 'Firebase' : 'Offline') : 'Local'; }
+
+    async function hydrateFirebase(){
+      if (!fb) return;
+      try {
+        const totalsSnap = await fb.get(fb.ref(fb.db, 'tvv/totals'));
+        if (totalsSnap.exists()) state.totals = totalsSnap.val() || {};
+        const lastSnap = await fb.get(fb.ref(fb.db, 'tvv/state/lastResult'));
+        if (lastSnap.exists()) state.lastResult = lastSnap.val();
+      } catch {}
+      saveState();
+      if (fb && online) {
+        try {
+          fb.onValue(fb.ref(fb.db, `tvv/days/${currentDayKey}`), snap => {
+            const remote = snap.val();
+            if (!remote) return;
+            const local = ensureDay(currentDayKey);
+            local.songs = remote.songs || local.songs;
+            local.votes = remote.votes || local.votes;
+            local.confirmed = !!remote.confirmed;
+            local.finalized = !!remote.finalized;
+            local.result = remote.result || local.result || [];
+            saveState();
+            currentDay = local;
+            renderVote(); renderResult(); renderGlobal();
+          });
+          fb.onValue(fb.ref(fb.db, 'tvv/totals'), snap => { state.totals = snap.val() || {}; saveState(); renderGlobal(); });
+          fb.onValue(fb.ref(fb.db, 'tvv/state/lastResult'), snap => { state.lastResult = snap.val() || state.lastResult; saveState(); renderResult(); });
+        } catch {}
+      }
+    }
+
+    function tick(){
+      const today = getTodayKey();
+      if (today !== currentDayKey) {
+        finalizeDay(currentDayKey);
+        currentDayKey = today;
+        currentDay = ensureDay(currentDayKey);
+        if (!state.selected && currentDay.songs[0]) state.selected = keyOf(currentDay.songs[0]);
+        saveState();
+        hydrateFirebase();
+      }
+      els.todayLabel.textContent = currentDayKey;
+      els.countdown.textContent = fmt(getCountdown());
+      updateNet();
+      renderVote();
+      renderResult();
+      renderGlobal();
+    }
+
+    async function boot(){
+      bindUI();
+      await loadCatalog();
+      currentDay = ensureDay(currentDayKey);
+      if (!state.selected && currentDay.songs[0]) state.selected = keyOf(currentDay.songs[0]);
+      updateNet();
+      renderYearTabs();
+      await hydrateFirebase();
+      tick();
+      setInterval(tick, 1000);
+      if (fb && online) flushQueue();
+      setStatus(fb ? (online ? 'Firebase activo.' : 'Offline, usando estado local.') : 'Sin Firebase, usando estado local.');
+    }
+
+    boot();
+  </script>
+</body>
+</html>
